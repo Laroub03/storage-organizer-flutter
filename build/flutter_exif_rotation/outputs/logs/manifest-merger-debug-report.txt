@@ -1,0 +1,15 @@
+-- Merging decision tree log ---
+manifest
+ADDED from /Users/ayoublaroub/.pub-cache/hosted/pub.dev/flutter_exif_rotation-0.5.2/android/src/main/AndroidManifest.xml:1:1-71
+INJECTED from /Users/ayoublaroub/.pub-cache/hosted/pub.dev/flutter_exif_rotation-0.5.2/android/src/main/AndroidManifest.xml:1:1-71
+	package
+		ADDED from /Users/ayoublaroub/.pub-cache/hosted/pub.dev/flutter_exif_rotation-0.5.2/android/src/main/AndroidManifest.xml:1:11-59
+		INJECTED from /Users/ayoublaroub/.pub-cache/hosted/pub.dev/flutter_exif_rotation-0.5.2/android/src/main/AndroidManifest.xml
+uses-sdk
+INJECTED from /Users/ayoublaroub/.pub-cache/hosted/pub.dev/flutter_exif_rotation-0.5.2/android/src/main/AndroidManifest.xml reason: use-sdk injection requested
+INJECTED from /Users/ayoublaroub/.pub-cache/hosted/pub.dev/flutter_exif_rotation-0.5.2/android/src/main/AndroidManifest.xml
+INJECTED from /Users/ayoublaroub/.pub-cache/hosted/pub.dev/flutter_exif_rotation-0.5.2/android/src/main/AndroidManifest.xml
+	android:targetSdkVersion
+		INJECTED from /Users/ayoublaroub/.pub-cache/hosted/pub.dev/flutter_exif_rotation-0.5.2/android/src/main/AndroidManifest.xml
+	android:minSdkVersion
+		INJECTED from /Users/ayoublaroub/.pub-cache/hosted/pub.dev/flutter_exif_rotation-0.5.2/android/src/main/AndroidManifest.xml

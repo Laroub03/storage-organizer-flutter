@@ -1,0 +1,1 @@
+com.dynamsoft.flutter_barcode_sdk

@@ -1,0 +1,1 @@
+ /Users/ayoublaroub/projects/VS-projects/storage-organizer-flutter/.dart_tool/flutter_build/c3d4a6af8a5cd48f0da36ddca6a52763/native_assets.yaml: 
