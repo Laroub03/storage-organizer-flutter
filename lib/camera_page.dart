@@ -1,7 +1,10 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_barcode_sdk/dynamsoft_barcode.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'camera/camera_manager.dart';
 import 'global.dart';
@@ -126,7 +129,99 @@ class _CameraPageState extends State<CameraPage> with WidgetsBindingObserver {
       onTap: () {
         _cameraManager.isReadyToGo = true;
       },
-      child: Image.asset('images/icon-capture.png', width: 80, height: 80),
+      child: Container(
+        width: 80,
+        height: 80,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          border: Border.all(color: Colors.green, width: 3),
+        ),
+        child: const Icon(
+          Icons.add,
+          color: Colors.green,
+          size: 40,
+        ),
+      ),
+    );
+    
+    var deleteButton = InkWell(
+      onTap: () async {
+        if (_cameraManager.barcodeResults != null && _cameraManager.barcodeResults!.isNotEmpty) {
+          final SharedPreferences prefs = await SharedPreferences.getInstance();
+          var results = prefs.getStringList('barcode_data');
+          if (results != null) {
+            for (BarcodeResult result in _cameraManager.barcodeResults!) {
+              String text = result.text;
+              bool exists = false;
+              int index = -1;
+              
+              // Find the barcode in the stored data
+              for (int i = 0; i < results.length; i++) {
+                Map<String, dynamic> jsonMap = jsonDecode(results[i]);
+                BarcodeResult storedResult = BarcodeResult.fromJson(jsonMap);
+                if (storedResult.text == text) {
+                  exists = true;
+                  index = i;
+                  break;
+                }
+              }
+              
+              if (exists && index >= 0) {
+                // Get the JSON for this item
+                Map<String, dynamic> jsonMap = jsonDecode(results[index]);
+                
+                // Get current quantity
+                Map<String, dynamic>? metadata = jsonMap['metadata'] as Map<String, dynamic>?;
+                int quantity = 1;
+                if (metadata != null && metadata.containsKey('quantity')) {
+                  quantity = metadata['quantity'] as int;
+                }
+                
+                if (quantity > 1) {
+                  // Decrement quantity
+                  if (jsonMap['metadata'] == null) {
+                    jsonMap['metadata'] = {};
+                  }
+                  jsonMap['metadata']['quantity'] = quantity - 1;
+                  results[index] = jsonEncode(jsonMap);
+                  prefs.setStringList('barcode_data', results);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Decreased quantity for barcode: $text')),
+                  );
+                } else {
+                  // Remove the barcode if quantity would become 0
+                  results.removeAt(index);
+                  prefs.setStringList('barcode_data', results);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Removed barcode: $text')),
+                  );
+                }
+              } else {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Barcode not found in queue')),
+                );
+              }
+            }
+          }
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('No barcode detected')),
+          );
+        }
+      },
+      child: Container(
+        width: 80,
+        height: 80,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          border: Border.all(color: Colors.red, width: 3),
+        ),
+        child: const Icon(
+          Icons.remove,
+          color: Colors.red,
+          size: 40,
+        ),
+      ),
     );
 
     return WillPopScope(
@@ -161,8 +256,12 @@ class _CameraPageState extends State<CameraPage> with WidgetsBindingObserver {
               ),
               Positioned(
                 bottom: 80,
-                left: 155,
-                right: 155,
+                left: 80,
+                child: deleteButton,
+              ),
+              Positioned(
+                bottom: 80,
+                right: 80,
                 child: captureButton,
               ),
             ],

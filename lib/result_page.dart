@@ -59,12 +59,54 @@ class _ResultPageState extends State<ResultPage> {
                     await SharedPreferences.getInstance();
                 var results = prefs.getStringList('barcode_data');
                 List<String> jsonList = <String>[];
+                
                 for (BarcodeResult result in widget.barcodeResults) {
-                  jsonList.add(jsonEncode(result.toJson()));
+                  // Check if this barcode already exists in the queue
+                  bool foundExisting = false;
+                  if (results != null) {
+                    for (int i = 0; i < results.length; i++) {
+                      Map<String, dynamic> jsonMap = jsonDecode(results[i]);
+                      BarcodeResult existingResult = BarcodeResult.fromJson(jsonMap);
+                      
+                      if (existingResult.text == result.text) {
+                        // This barcode already exists, increment its quantity
+                        foundExisting = true;
+                        
+                        // Get current quantity
+                        Map<String, dynamic>? metadata = jsonMap['metadata'] as Map<String, dynamic>?;
+                        int quantity = 1;
+                        if (metadata != null && metadata.containsKey('quantity')) {
+                          quantity = metadata['quantity'] as int;
+                        }
+                        
+                        // Increment quantity
+                        if (jsonMap['metadata'] == null) {
+                          jsonMap['metadata'] = {};
+                        }
+                        jsonMap['metadata']['quantity'] = quantity + 1;
+                        
+                        // Update in results list
+                        results[i] = jsonEncode(jsonMap);
+                        break;
+                      }
+                    }
+                  }
+                  
+                  if (!foundExisting) {
+                    // This is a new barcode, add it with quantity 1
+                    Map<String, dynamic> jsonMap = result.toJson();
+                    if (jsonMap['metadata'] == null) {
+                      jsonMap['metadata'] = {};
+                    }
+                    jsonMap['metadata']['quantity'] = 1;
+                    jsonList.add(jsonEncode(jsonMap));
+                  }
                 }
+                
                 if (results == null) {
                   prefs.setStringList('barcode_data', jsonList);
                 } else {
+                  // Only add new barcodes
                   results.addAll(jsonList);
                   prefs.setStringList('barcode_data', results);
                 }
@@ -140,7 +182,7 @@ class MyCustomWidget extends StatelessWidget {
                     SizedBox(
                       width: MediaQuery.of(context).size.width - 110,
                       child: Text(
-                        'Text: ${result.text}',
+                        '   Barcode: ${result.text}',
                         style: const TextStyle(
                             color: Colors.white,
                             fontSize: 14,
@@ -154,7 +196,7 @@ class MyCustomWidget extends StatelessWidget {
                   onTap: () {
                     Clipboard.setData(ClipboardData(
                         text:
-                            'Text: ${result.text}'));
+                            'Barcode: ${result.text}'));
                   },
                   // child: Text('Copy',
                   //     style: TextStyle(color: colorGreen, fontSize: 14)),
