@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:barcodescanner/api_service.dart';
 import 'package:barcodescanner/queue_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_barcode_sdk/dynamsoft_barcode.dart';
@@ -15,10 +16,12 @@ class QueuePage extends StatefulWidget {
 
 class QueuePageState extends State<QueuePage> {
   bool _isLoaded = false;
+  bool _isSending = false;
   final List<BarcodeResult> _barcodeQueue =
       List<BarcodeResult>.empty(growable: true);
   final Map<String, int> _quantities = {};
   final Map<String, Map<String, dynamic>> _barcodeMetadata = {};
+  final ApiService _apiService = ApiService();
 
   @override
   void initState() {
@@ -135,6 +138,116 @@ class QueuePageState extends State<QueuePage> {
       setState(() {});
     }
   }
+  
+  Future<void> sendToApi() async {
+    if (_barcodeQueue.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No items in queue to send')),
+      );
+      return;
+    }
+    
+    setState(() {
+      _isSending = true;
+    });
+    
+    try {
+      // Load token if not already loaded
+      if (!_apiService.isAuthenticated()) {
+        final prefs = await SharedPreferences.getInstance();
+        final token = prefs.getString('auth_token');
+        if (token != null) {
+          _apiService.setToken(token);
+        } else {
+          throw Exception('Not authenticated. Please log in first.');
+        }
+      }
+      
+      // Prepare data for API
+      List<Map<String, dynamic>> productsData = [];
+      
+      for (int i = 0; i < _barcodeQueue.length; i++) {
+        BarcodeResult result = _barcodeQueue[i];
+        Map<String, dynamic> metadata = _barcodeMetadata[result.text] ?? {};
+        int quantity = _quantities[result.text] ?? 1;
+        
+        // Get locationId and categoryId from metadata or use defaults
+        int locationId = 1; // Default
+        int categoryId = 1; // Default
+        
+        if (metadata.containsKey('locationId') && metadata['locationId'] != null) {
+          locationId = metadata['locationId'] is int 
+              ? metadata['locationId'] 
+              : int.tryParse(metadata['locationId'].toString()) ?? 1;
+        }
+        
+        if (metadata.containsKey('categoryId') && metadata['categoryId'] != null) {
+          categoryId = metadata['categoryId'] is int 
+              ? metadata['categoryId'] 
+              : int.tryParse(metadata['categoryId'].toString()) ?? 1;
+        }
+        
+        // Create product data - we use defaults for required fields if not set in metadata
+        Map<String, dynamic> productData = {
+          'name': metadata['name'] ?? 'Scanned Product',
+          'description': metadata['description'] ?? 'Scanned with mobile app',
+          'quantity': quantity,
+          'barcode': result.text,
+          'locationId': locationId,
+          'categoryId': categoryId,
+        };
+        
+        // Log the product data we're sending
+        print('Preparing product: $productData');
+        
+        productsData.add(productData);
+      }
+      
+      if (productsData.isEmpty) {
+        throw Exception('No valid product data to send');
+      }
+      
+      // Send to API
+      print('Sending ${productsData.length} products to API');
+      final results = await _apiService.createProductsBatch(productsData);
+      print('Received ${results.length} products back from API');
+      
+      // Clear queue after successful send
+      final SharedPreferences prefs = await SharedPreferences.getInstance();
+      await prefs.remove('barcode_data');
+      
+      setState(() {
+        _barcodeQueue.clear();
+        _quantities.clear();
+        _barcodeMetadata.clear();
+        _isSending = false;
+      });
+      
+      // Show success message
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Successfully sent ${results.length} items to storage'),
+          backgroundColor: Colors.green,
+        ),
+      );
+      
+    } catch (e) {
+      print('Error in sendToApi: $e');
+      
+      setState(() {
+        _isSending = false;
+      });
+      
+      // Show more detailed error message
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error sending items: ${e.toString()}'),
+          backgroundColor: Colors.red,
+          duration: const Duration(seconds: 5),
+        ),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -149,6 +262,7 @@ class QueuePageState extends State<QueuePage> {
               return MyCustomWidget(
                   result: result,
                   quantity: quantity,
+                  metadata: _barcodeMetadata[result.text],
                   cbDeleted: () async {
                     _barcodeQueue.removeAt(index);
                     _quantities.remove(result.text);
@@ -185,6 +299,8 @@ class QueuePageState extends State<QueuePage> {
                   await prefs.remove('barcode_data');
                   setState(() {
                     _barcodeQueue.clear();
+                    _quantities.clear();
+                    _barcodeMetadata.clear();
                   });
                 },
                 icon: Image.asset(
@@ -197,8 +313,26 @@ class QueuePageState extends State<QueuePage> {
         ],
       ),
       body: _isLoaded
-          ? Column(
-              children: [listView],
+          ? Stack(
+              children: [
+                Column(
+                  children: [listView],
+                ),
+                // Send button - positioned at bottom right
+                Positioned(
+                  bottom: 20,
+                  right: 20,
+                  child: FloatingActionButton(
+                    onPressed: _isSending ? null : sendToApi,
+                    backgroundColor: colorMainTheme,
+                    child: _isSending
+                        ? const CircularProgressIndicator(
+                            valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                          )
+                        : const Icon(Icons.send, color: Colors.white),
+                  ),
+                ),
+              ],
             )
           : const Center(
               child: CircularProgressIndicator(),

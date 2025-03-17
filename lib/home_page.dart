@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_barcode_sdk/dynamsoft_barcode.dart';
 import 'package:flutter_barcode_sdk/flutter_barcode_sdk.dart';
 import 'package:flutter_exif_rotation/flutter_exif_rotation.dart';
-import 'package:url_launcher/url_launcher_string.dart';
 import 'result_page.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:image_picker/image_picker.dart';

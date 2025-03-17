@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:barcodescanner/api_service.dart';
 import 'package:barcodescanner/queue_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -32,12 +33,56 @@ class MyCustomWidget extends StatefulWidget {
 
 class _MyCustomWidgetState extends State<MyCustomWidget> {
   late int quantity;
-  final List<String> warehouses = ['Warehouse A', 'Warehouse B', 'Warehouse C'];
+  List<String> warehouses = [];
+  bool _isLoadingWarehouses = false;
 
   @override
   void initState() {
     super.initState();
     quantity = widget.quantity;
+    _loadWarehouses();
+  }
+  
+  Future<void> _loadWarehouses() async {
+    setState(() {
+      _isLoadingWarehouses = true;
+    });
+    
+    try {
+      final apiService = ApiService();
+      // Load token if needed (in case it wasn't properly loaded in main.dart)
+      if (!apiService.isAuthenticated()) {
+        final prefs = await SharedPreferences.getInstance();
+        final token = prefs.getString('auth_token');
+        if (token != null) {
+          apiService.setToken(token);
+        }
+      }
+      
+      if (apiService.isAuthenticated()) {
+        final locations = await apiService.getAllLocations();
+        setState(() {
+          warehouses = locations.map((location) => location.name).toList();
+          if (warehouses.isEmpty) {
+            warehouses = ['Default Warehouse']; // Fallback if no warehouses
+          }
+        });
+      } else {
+        setState(() {
+          warehouses = ['Default Warehouse']; // Fallback if not authenticated
+        });
+      }
+    } catch (e) {
+      // If there's an error fetching warehouses, use default values
+      print('Error loading warehouses: $e');
+      setState(() {
+        warehouses = ['Default Warehouse'];
+      });
+    } finally {
+      setState(() {
+        _isLoadingWarehouses = false;
+      });
+    }
   }
 
   void _showEditDialog(BuildContext context, BarcodeResult result) {
@@ -106,8 +151,23 @@ class _MyCustomWidgetState extends State<MyCustomWidget> {
                       ),
                     ),
                     SizedBox(height: 20),
-                    DropdownButtonFormField<String>(
-                      value: selectedWarehouse,
+                    _isLoadingWarehouses
+                    ? Row(
+                        children: [
+                          Text('Loading warehouses...', style: TextStyle(color: colorSubtitle)),
+                          SizedBox(width: 8),
+                          SizedBox(
+                            width: 16, 
+                            height: 16,
+                            child: CircularProgressIndicator(
+                              valueColor: AlwaysStoppedAnimation<Color>(colorBlue),
+                              strokeWidth: 2,
+                            ),
+                          ),
+                        ],
+                      )
+                    : DropdownButtonFormField<String>(
+                      value: warehouses.contains(selectedWarehouse) ? selectedWarehouse : warehouses.first,
                       dropdownColor: colorBackground,
                       style: TextStyle(color: Colors.white),
                       decoration: InputDecoration(

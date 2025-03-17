@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'global.dart';
 import 'queue_page.dart';
-
+import 'setting_page.dart';
+import 'login_page.dart';
 import 'home_page.dart';
 
 class TabPage extends StatefulWidget {
@@ -22,6 +24,10 @@ class _TabPageState extends State<TabPage> with SingleTickerProviderStateMixin {
         text: 'Queue',
         icon: 'images/icon-history-gray.png',
         selectedIcon: 'images/icon-history-blue.png'),
+    CustomTab(
+        text: 'Settings',
+        icon: 'images/icon-about-gray.png',
+        selectedIcon: 'images/icon-home-blue.png'),
   ];
 
   int selectedIndex = 0;
@@ -29,7 +35,49 @@ class _TabPageState extends State<TabPage> with SingleTickerProviderStateMixin {
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(vsync: this, length: 2);
+    _tabController = TabController(vsync: this, length: 3);
+  }
+  
+  Future<void> _logout() async {
+    // Show confirmation dialog
+    final bool shouldLogout = await showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          backgroundColor: colorBackground,
+          title: const Text('Logout', style: TextStyle(color: Colors.white)),
+          content: const Text(
+            'Are you sure you want to logout?',
+            style: TextStyle(color: Colors.white),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: Text('Cancel', style: TextStyle(color: colorSubtitle)),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              child: Text('Logout', style: TextStyle(color: colorBlue)),
+            ),
+          ],
+        );
+      },
+    ) ?? false;
+    
+    if (shouldLogout) {
+      // Clear login status and auth token
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool('isLoggedIn', false);
+      await prefs.remove('auth_token');
+      
+      // Navigate to login page
+      if (mounted) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const LoginPage()),
+        );
+      }
+    }
   }
 
   @override
@@ -37,9 +85,10 @@ class _TabPageState extends State<TabPage> with SingleTickerProviderStateMixin {
     return Scaffold(
         body: TabBarView(
           controller: _tabController,
-          children: const [
-            HomePage(),
-            QueuePage(),
+          children: [
+            const HomePage(),
+            const QueuePage(),
+            SettingPage(onLogout: _logout),
           ],
         ),
         bottomNavigationBar: SizedBox(

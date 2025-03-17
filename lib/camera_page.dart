@@ -10,7 +10,6 @@ import 'camera/camera_manager.dart';
 import 'global.dart';
 
 import 'result_page.dart';
-import 'setting_page.dart';
 
 class CameraPage extends StatefulWidget {
   const CameraPage({super.key});

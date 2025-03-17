@@ -2,7 +2,9 @@ import 'package:barcodescanner/global.dart';
 import 'package:flutter/material.dart';
 
 class SettingPage extends StatefulWidget {
-  const SettingPage({super.key});
+  final Function()? onLogout;
+  
+  const SettingPage({super.key, this.onLogout});
 
   @override
   State<SettingPage> createState() => _SettingPageState();
@@ -18,13 +20,41 @@ class _SettingPageState extends State<SettingPage> {
       child: Scaffold(
         appBar: AppBar(
           backgroundColor: colorMainTheme,
-          title: const Text('Settings'),
-          iconTheme: const IconThemeData(
-            color:
-                Colors.white, // Set the color of the back arrow and other icons
-          ),
+          title: const Text('Settings', style: TextStyle(color: Colors.white)),
+          centerTitle: true,
         ),
-        body: const ExpansionPanelListFormats(),
+        body: Column(
+          children: [
+            // Barcode formats section
+            const Expanded(
+              child: ExpansionPanelListFormats(),
+            ),
+            
+            // Logout button
+            if (widget.onLogout != null)
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(20),
+                child: ElevatedButton(
+                  onPressed: widget.onLogout,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.red[800],
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                  child: const Text(
+                    'Logout',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 16,
+                    ),
+                  ),
+                ),
+              ),
+          ],
+        ),
       ),
     );
   }
