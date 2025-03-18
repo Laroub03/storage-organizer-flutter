@@ -18,17 +18,21 @@ class ApiService {
 
   // Get headers for authenticated requests
   Map<String, String> _getAuthHeaders() {
-    return {
+    final headers = {
       'Content-Type': 'application/json',
       'Authorization': 'Bearer $_token',
     };
+    print('Sending headers: $headers');
+    return headers;
   }
 
   // Get headers for multipart requests
   Map<String, String> _getMultipartAuthHeaders() {
-    return {
+    final headers = {
       'Authorization': 'Bearer $_token',
     };
+    print('Sending multipart headers: $headers');
+    return headers;
   }
 
   // Check if the user is authenticated
@@ -40,9 +44,12 @@ class ApiService {
 
   // Login
   Future<Map<String, dynamic>> login(String username, String password) async {
+    final headers = {'Content-Type': 'application/json'};
+    print('Sending login headers: $headers');
+    
     final response = await http.post(
       Uri.parse('$baseUrl/login'),
-      headers: {'Content-Type': 'application/json'},
+      headers: headers,
       body: jsonEncode({
         'username': username,
         'password': password,
@@ -295,9 +302,12 @@ class ApiService {
     print('Sending request with data: $productData');
     
     try {
+      final headers = _getAuthHeaders();
+      print('Create product request headers: $headers');
+      
       final response = await http.post(
         Uri.parse('$baseUrl/products'),
-        headers: _getAuthHeaders(),
+        headers: headers,
         body: jsonEncode(productData),
       );
 
@@ -670,7 +680,9 @@ class ApiService {
       Uri.parse('$baseUrl/images/upload/$productId'),
     );
 
-    request.headers.addAll(_getMultipartAuthHeaders());
+    final headers = _getMultipartAuthHeaders();
+    request.headers.addAll(headers);
+    print('Upload product image request headers: ${request.headers}');
 
     final fileStream = http.ByteStream(imageFile.openRead());
     final fileLength = await imageFile.length();

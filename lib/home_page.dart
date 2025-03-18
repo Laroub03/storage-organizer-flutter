@@ -31,7 +31,7 @@ class _HomePageState extends State<HomePage> {
         ));
   }
 
-void scanImage() async {
+  void scanImage() async {
     XFile? photo = await picker.pickImage(source: ImageSource.gallery);
 
     if (photo == null) {
@@ -51,19 +51,22 @@ void scanImage() async {
     ByteData? byteData =
         await image.toByteData(format: ui.ImageByteFormat.rawRgba);
 
-    if (byteData != null) {
-      List<BarcodeResult>? results = await barcodeReader.decodeImageBuffer(
-          byteData.buffer.asUint8List(),
-          image.width,
-          image.height,
-          byteData.lengthInBytes ~/ image.height,
-          ImagePixelFormat.IPF_ARGB_8888.index);
+    // Add null check for byteData
+    if (byteData == null) {
+      // Handle the case where byteData is null
+      debugPrint('Failed to get byte data from the image');
+      return;
+    }
 
-      if (results.isNotEmpty) {
-        openResultPage(results);
-      }
-    } else {
-      print('Failed to get byte data from image');
+    List<BarcodeResult>? results = await barcodeReader.decodeImageBuffer(
+        byteData.buffer.asUint8List(),
+        image.width,
+        image.height,
+        byteData.lengthInBytes ~/ image.height,
+        ImagePixelFormat.IPF_ARGB_8888.index);
+
+    if (results.isNotEmpty) {
+      openResultPage(results);
     }
   }
 
@@ -80,8 +83,6 @@ void scanImage() async {
             color: Colors.white,
           )),
     );
-
-
 
     final buttons = Padding(
         padding: const EdgeInsets.only(top: 44),

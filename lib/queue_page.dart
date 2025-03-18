@@ -193,6 +193,7 @@ class QueuePageState extends State<QueuePage> {
           'description': metadata['description'] ?? 'Scanned with mobile app',
           'quantity': quantity,
           'barcode': result.text,
+          'manufacturer': metadata['manufacturer'] ?? 'Unknown',
           'locationId': locationId,
           'categoryId': categoryId,
         };
