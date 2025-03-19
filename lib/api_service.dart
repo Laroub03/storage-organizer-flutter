@@ -726,32 +726,4 @@ class ApiService {
     }
   }
 
-  // Create multiple products in batch
-  Future<List<Product>> createProductsBatch(
-      List<Map<String, dynamic>> productsData) async {
-    try {
-      print('Sending batch request with data: $productsData');
-      
-      final response = await http.post(
-        Uri.parse('$baseUrl/products/batch'),
-        headers: _getAuthHeaders(),
-        body: jsonEncode(productsData),
-      );
-      
-      print('Batch response status code: ${response.statusCode}');
-      print('Batch response body: ${response.body}');
-
-      if (response.statusCode == 201) {
-        final List<dynamic> jsonList = jsonDecode(response.body);
-        return jsonList.map((json) => Product.fromJson(json)).toList();
-      } else if (response.statusCode == 400) {
-        throw Exception('Invalid data: ${response.body}');
-      } else {
-        throw Exception('Failed to create products: ${response.statusCode} - ${response.reasonPhrase} - ${response.body}');
-      }
-    } catch (e) {
-      print('Error in createProductsBatch: $e');
-      rethrow;
-    }
-  }
 }

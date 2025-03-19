@@ -138,6 +138,7 @@ class QueuePageState extends State<QueuePage> {
       setState(() {});
     }
   }
+
   
   Future<void> sendToApi() async {
     if (_barcodeQueue.isEmpty) {
@@ -208,12 +209,24 @@ class QueuePageState extends State<QueuePage> {
         throw Exception('No valid product data to send');
       }
       
-      // Send to API
-      print('Sending ${productsData.length} products to API');
-      final results = await _apiService.createProductsBatch(productsData);
-      print('Received ${results.length} products back from API');
+      // Send to API one by one
+      print('Sending ${productsData.length} products to API individually');
+      List<dynamic> results = [];
       
-      // Clear queue after successful send
+      for (var productData in productsData) {
+        try {
+          final result = await _apiService.createProduct(productData);
+          results.add(result);
+          print('Successfully created product: ${result.name}');
+        } catch (e) {
+          print('Error creating individual product: $e');
+          // Continue with the next product
+        }
+      }
+      
+      print('Created ${results.length} products');
+      
+      // Clear queue after send attempt
       final SharedPreferences prefs = await SharedPreferences.getInstance();
       await prefs.remove('barcode_data');
       
