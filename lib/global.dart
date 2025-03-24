@@ -377,7 +377,7 @@ Future<void> updateFormats() async {
 
 Future<int> initBarcodeSDK() async {
   int ret = await barcodeReader.setLicense(
-      'DLS2eyJoYW5kc2hha2VDb2RlIjoiMjAwMDAxLTE2NDk4Mjk3OTI2MzUiLCJvcmdhbml6YXRpb25JRCI6IjIwMDAwMSIsInNlc3Npb25QYXNzd29yZCI6IndTcGR6Vm05WDJrcEQ5YUoifQ==');
+      't0085pwAAAAHfZFFz394vgloy7ZKydXjBl91NkjUcm7GsKqkV5h2XHYS76GeOtFnoVknTeTXsVjjE/cQFTWbbWaensgfj7YjQKuaxybF+/HFNJCNvF4shlA==;t0088pwAAALiO1Mz3LxntPAfAG/Wxp7TRXO0YFwJX+RFZ9vCEqgTS4TMwGPgaGR0oWprSTL4gskexqnjFVHvGoRLlYkMsIT2d6KdJXcem5fvxl9dEGXkCKhghtA==');
   if (ret == 0) isLicenseValid = true;
   await barcodeReader.init();
   return ret;
